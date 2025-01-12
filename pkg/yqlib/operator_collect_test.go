@@ -7,6 +7,13 @@ import (
 var collectOperatorScenarios = []expressionScenario{
 	{
 		skipDoc:    true,
+		expression: `["x", "y"] | .[1]`,
+		expected: []string{
+			"D0, P[1], (!!str)::y\n",
+		},
+	},
+	{
+		skipDoc:    true,
 		document:   ``,
 		expression: `.a += [0]`,
 		expected: []string{
@@ -18,6 +25,14 @@ var collectOperatorScenarios = []expressionScenario{
 		expression: `[1,2,3]`,
 		expected: []string{
 			"D0, P[], (!!seq)::- 1\n- 2\n- 3\n",
+		},
+	},
+	{
+		skipDoc:     true,
+		description: "update in collect",
+		expression:  `[.a = "cat"]`,
+		expected: []string{
+			"D0, P[], (!!seq)::- a: cat\n",
 		},
 	},
 	{
@@ -92,6 +107,14 @@ var collectOperatorScenarios = []expressionScenario{
 		expression: `[.[]]`,
 		expected: []string{
 			"D0, P[], (!!seq)::- 1\n- 2\n- 3\n",
+		},
+	},
+	{
+		skipDoc:    true,
+		expression: `[1,2][]`,
+		expected: []string{
+			"D0, P[0], (!!int)::1\n",
+			"D0, P[1], (!!int)::2\n",
 		},
 	},
 	{

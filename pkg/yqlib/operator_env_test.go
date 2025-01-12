@@ -7,6 +7,16 @@ import (
 var envOperatorScenarios = []expressionScenario{
 	{
 		description:          "Read string environment variable",
+		skipDoc:              true,
+		environmentVariables: map[string]string{"myenv": "[cat,dog]"},
+		expression:           `env(myenv)[]`,
+		expected: []string{
+			"D0, P[0], (!!str)::cat\n",
+			"D0, P[1], (!!str)::dog\n",
+		},
+	},
+	{
+		description:          "Read string environment variable",
 		environmentVariables: map[string]string{"myenv": "cat meow"},
 		expression:           `.a = env(myenv)`,
 		expected: []string{
@@ -60,7 +70,7 @@ var envOperatorScenarios = []expressionScenario{
 		environmentVariables: map[string]string{"pathEnv": ".a.b[0].name", "valueEnv": "moo"},
 		expression:           `eval(strenv(pathEnv)) = strenv(valueEnv)`,
 		expected: []string{
-			"D0, P[], (doc)::{a: {b: [{name: moo}, {name: cat}]}}\n",
+			"D0, P[], (!!map)::{a: {b: [{name: moo}, {name: cat}]}}\n",
 		},
 	},
 	{
@@ -136,7 +146,7 @@ var envOperatorScenarios = []expressionScenario{
 		document:             "{v: \"${myenv}\"}",
 		expression:           `.v |= envsubst`,
 		expected: []string{
-			"D0, P[], (doc)::{v: \"cat meow\"}\n",
+			"D0, P[], (!!map)::{v: \"cat meow\"}\n",
 		},
 	},
 	{

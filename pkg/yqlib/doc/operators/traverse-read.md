@@ -1,12 +1,6 @@
 # Traverse (Read)
 
-This is the simplest (and perhaps most used) operator, it is used to navigate deeply into yaml structures.
-
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
+This is the simplest (and perhaps most used) operator. It is used to navigate deeply into yaml structures.
 
 ## Simple map navigation
 Given a sample.yml file of:
@@ -57,7 +51,7 @@ will output
 ```
 
 ## Special characters
-Use quotes with brackets around path elements with special characters
+Use quotes with square brackets around path elements with special characters
 
 Given a sample.yml file of:
 ```yaml
@@ -89,7 +83,7 @@ apple
 ```
 
 ## Keys with spaces
-Use quotes with brackets around path elements with special characters
+Use quotes with square brackets around path elements with special characters
 
 Given a sample.yml file of:
 ```yaml

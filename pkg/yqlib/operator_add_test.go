@@ -15,6 +15,14 @@ var addOperatorScenarios = []expressionScenario{
 		},
 	},
 	{
+		skipDoc:     true,
+		description: "add sequence creates a new sequence",
+		expression:  `["a"] as $f | {0:$f + ["b"], 1:$f}`,
+		expected: []string{
+			"D0, P[], (!!map)::0:\n    - a\n    - b\n1:\n    - a\n",
+		},
+	},
+	{
 		skipDoc:    true,
 		document:   `a: key`,
 		expression: `. += {"key": "b"}`,
@@ -34,9 +42,9 @@ var addOperatorScenarios = []expressionScenario{
 	{
 		skipDoc:    true,
 		document:   `{}`,
-		expression: "(.a + .b) as $x",
+		expression: "(.a + .b) as $x | .",
 		expected: []string{
-			"D0, P[], (doc)::{}\n",
+			"D0, P[], (!!map)::{}\n",
 		},
 	},
 	{
@@ -44,7 +52,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:   `a: 0`,
 		expression: ".a += .b.c",
 		expected: []string{
-			"D0, P[], (doc)::a: 0\n",
+			"D0, P[], (!!map)::a: 0\n",
 		},
 	},
 
@@ -63,7 +71,7 @@ var addOperatorScenarios = []expressionScenario{
 		dontFormatInputForDoc: true,
 		expression:            `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: [1, 2, 3, 4]\nb:\n    - 3\n    - 4\n",
+			"D0, P[], (!!map)::a: [1, 2, 3, 4]\nb:\n    - 3\n    - 4\n",
 		},
 	},
 	{
@@ -98,7 +106,15 @@ var addOperatorScenarios = []expressionScenario{
 		document:              `a: ['dog']`,
 		expression:            `.a += "cat"`,
 		expected: []string{
-			"D0, P[], (doc)::a: ['dog', 'cat']\n",
+			"D0, P[], (!!map)::a: ['dog', 'cat']\n",
+		},
+	},
+	{
+		description: "Prepend to existing array",
+		document:    `a: [dog]`,
+		expression:  `.a = ["cat"] + .a`,
+		expected: []string{
+			"D0, P[], (!!map)::a: [cat, dog]\n",
 		},
 	},
 	{
@@ -108,7 +124,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:       `{a: ['dog'], b: cat}`,
 		expression:     `.a = .a + .b`,
 		expected: []string{
-			"D0, P[], (doc)::{a: ['dog', 'cat'], b: cat}\n",
+			"D0, P[], (!!map)::{a: ['dog', 'cat'], b: cat}\n",
 		},
 	},
 	{
@@ -117,7 +133,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    `a: []`,
 		expression:  `.a += "cat"`,
 		expected: []string{
-			"D0, P[], (doc)::a:\n    - cat\n",
+			"D0, P[], (!!map)::a:\n    - cat\n",
 		},
 	},
 	{
@@ -126,7 +142,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    `a: [dog]`,
 		expression:  `.a += "cat"`,
 		expected: []string{
-			"D0, P[], (doc)::a: [dog, cat]\n",
+			"D0, P[], (!!map)::a: [dog, cat]\n",
 		},
 	},
 	{
@@ -163,7 +179,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    `a: {}`,
 		expression:  `.a += {"b": "cat"}`,
 		expected: []string{
-			"D0, P[], (doc)::a:\n    b: cat\n",
+			"D0, P[], (!!map)::a:\n    b: cat\n",
 		},
 	},
 	{
@@ -172,7 +188,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    `a: {c: dog}`,
 		expression:  `.a += {"b": "cat"}`,
 		expected: []string{
-			"D0, P[], (doc)::a: {c: dog, b: cat}\n",
+			"D0, P[], (!!map)::a: {c: dog, b: cat}\n",
 		},
 	},
 	{
@@ -188,7 +204,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    `a: { a1: {b: [cat]}, a2: {b: [dog]}, a3: {} }`,
 		expression:  `.a[].b += ["mouse"]`,
 		expected: []string{
-			"D0, P[], (doc)::a: {a1: {b: [cat, mouse]}, a2: {b: [dog, mouse]}, a3: {b: [mouse]}}\n",
+			"D0, P[], (!!map)::a: {a1: {b: [cat, mouse]}, a2: {b: [dog, mouse]}, a3: {b: [mouse]}}\n",
 		},
 	},
 	{
@@ -196,7 +212,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    `{a: cat, b: meow}`,
 		expression:  `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::{a: catmeow, b: meow}\n",
+			"D0, P[], (!!map)::{a: catmeow, b: meow}\n",
 		},
 	},
 	{
@@ -218,12 +234,26 @@ var addOperatorScenarios = []expressionScenario{
 		},
 	},
 	{
+		skipDoc:    true,
+		expression: `null + "cat"`,
+		expected: []string{
+			"D0, P[], (!!str)::cat\n",
+		},
+	},
+	{
+		skipDoc:    true,
+		expression: `"cat" + null`,
+		expected: []string{
+			"D0, P[], (!!str)::cat\n",
+		},
+	},
+	{
 		description:    "Number addition - float",
 		subdescription: "If the lhs or rhs are floats then the expression will be calculated with floats.",
 		document:       `{a: 3, b: 4.9}`,
 		expression:     `.a = .a + .b`,
 		expected: []string{
-			"D0, P[], (doc)::{a: 7.9, b: 4.9}\n",
+			"D0, P[], (!!map)::{a: 7.9, b: 4.9}\n",
 		},
 	},
 	{
@@ -232,7 +262,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:       `{a: 3, b: 4}`,
 		expression:     `.a = .a + .b`,
 		expected: []string{
-			"D0, P[], (doc)::{a: 7, b: 4}\n",
+			"D0, P[], (!!map)::{a: 7, b: 4}\n",
 		},
 	},
 	{
@@ -240,7 +270,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    `{a: 3, b: 5}`,
 		expression:  `.[] += 1`,
 		expected: []string{
-			"D0, P[], (doc)::{a: 4, b: 6}\n",
+			"D0, P[], (!!map)::{a: 4, b: 6}\n",
 		},
 	},
 	{
@@ -249,7 +279,16 @@ var addOperatorScenarios = []expressionScenario{
 		document:       `a: 2021-01-01T00:00:00Z`,
 		expression:     `.a += "3h10m"`,
 		expected: []string{
-			"D0, P[], (doc)::a: 2021-01-01T03:10:00Z\n",
+			"D0, P[], (!!map)::a: 2021-01-01T03:10:00Z\n",
+		},
+	},
+	{
+		description: "Date addition -date only",
+		skipDoc:     true,
+		document:    `a: 2021-01-01`,
+		expression:  `.a += "24h"`,
+		expected: []string{
+			"D0, P[], (!!map)::a: 2021-01-02T00:00:00Z\n",
 		},
 	},
 	{
@@ -258,7 +297,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:       `a: Saturday, 15-Dec-01 at 2:59AM GMT`,
 		expression:     `with_dtf("Monday, 02-Jan-06 at 3:04PM MST", .a += "3h1m")`,
 		expected: []string{
-			"D0, P[], (doc)::a: Saturday, 15-Dec-01 at 6:00AM GMT\n",
+			"D0, P[], (!!map)::a: Saturday, 15-Dec-01 at 6:00AM GMT\n",
 		},
 	},
 	{
@@ -268,7 +307,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:       `a: !cat Saturday, 15-Dec-01 at 2:59AM GMT`,
 		expression:     `with_dtf("Monday, 02-Jan-06 at 3:04PM MST", .a += "3h1m")`,
 		expected: []string{
-			"D0, P[], (doc)::a: !cat Saturday, 15-Dec-01 at 6:00AM GMT\n",
+			"D0, P[], (!!map)::a: !cat Saturday, 15-Dec-01 at 6:00AM GMT\n",
 		},
 	},
 	{
@@ -285,7 +324,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:       "a: {thing: {name: Astuff, value: x}, a1: cool}\nb: {thing: {name: Bstuff, legs: 3}, b1: neat}",
 		expression:     `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: {thing: {name: Bstuff, legs: 3}, a1: cool, b1: neat}\nb: {thing: {name: Bstuff, legs: 3}, b1: neat}\n",
+			"D0, P[], (!!map)::a: {thing: {name: Bstuff, legs: 3}, a1: cool, b1: neat}\nb: {thing: {name: Bstuff, legs: 3}, b1: neat}\n",
 		},
 	},
 	{
@@ -294,7 +333,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:       "a: !horse cat\nb: !goat _meow",
 		expression:     `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: !horse cat_meow\nb: !goat _meow\n",
+			"D0, P[], (!!map)::a: !horse cat_meow\nb: !goat _meow\n",
 		},
 	},
 	{
@@ -303,7 +342,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:       "a: !horse 1.2\nb: !goat 2.3",
 		expression:     `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: !horse 3.5\nb: !goat 2.3\n",
+			"D0, P[], (!!map)::a: !horse 3.5\nb: !goat 2.3\n",
 		},
 	},
 	{
@@ -311,7 +350,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:   "a: !horse 2\nb: !goat 2.3",
 		expression: `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: !horse 4.3\nb: !goat 2.3\n",
+			"D0, P[], (!!map)::a: !horse 4.3\nb: !goat 2.3\n",
 		},
 	},
 	{
@@ -319,7 +358,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:   "a: 2\nb: !goat 2.3",
 		expression: `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: 4.3\nb: !goat 2.3\n",
+			"D0, P[], (!!map)::a: 4.3\nb: !goat 2.3\n",
 		},
 	},
 	{
@@ -328,7 +367,7 @@ var addOperatorScenarios = []expressionScenario{
 		document:    "a: !horse 2\nb: !goat 3",
 		expression:  `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: !horse 5\nb: !goat 3\n",
+			"D0, P[], (!!map)::a: !horse 5\nb: !goat 3\n",
 		},
 	},
 	{
@@ -338,8 +377,31 @@ var addOperatorScenarios = []expressionScenario{
 		document:       "a: !horse [a]\nb: !goat [b]",
 		expression:     `.a += .b`,
 		expected: []string{
-			"D0, P[], (doc)::a: !horse [a, b]\nb: !goat [b]\n",
+			"D0, P[], (!!map)::a: !horse [a, b]\nb: !goat [b]\n",
 		},
+	},
+	{
+		skipDoc:     true,
+		description: "Keep anchors",
+		document:    "a: &horse [1]",
+		expression:  `.a += 2`,
+		expected: []string{
+			"D0, P[], (!!map)::a: &horse [1, 2]\n",
+		},
+	},
+	{
+		skipDoc:       true,
+		description:   "Add sequence to map",
+		document:      "a: {x: cool}",
+		expression:    `.a += [2]`,
+		expectedError: "!!seq () cannot be added to a !!map (a)",
+	},
+	{
+		skipDoc:       true,
+		description:   "Add sequence to scalar",
+		document:      "a: cool",
+		expression:    `.a += [2]`,
+		expectedError: "!!seq () cannot be added to a !!str (a)",
 	},
 }
 

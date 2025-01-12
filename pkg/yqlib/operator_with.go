@@ -3,11 +3,11 @@ package yqlib
 import "fmt"
 
 func withOperator(d *dataTreeNavigator, context Context, expressionNode *ExpressionNode) (Context, error) {
-	log.Debugf("-- withOperator")
+	log.Debugf("withOperator")
 	// with(path, exp)
 
 	if expressionNode.RHS.Operation.OperationType != blockOpType {
-		return Context{}, fmt.Errorf("with must be given a block, got %v instead", expressionNode.RHS.Operation.OperationType.Type)
+		return Context{}, fmt.Errorf("with must be given a block (;), got %v instead", expressionNode.RHS.Operation.OperationType.Type)
 	}
 
 	pathExp := expressionNode.RHS.LHS

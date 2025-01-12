@@ -4,12 +4,6 @@ Filter a map by the specified list of keys. Map is returned with the key in the 
 
 Similarly, filter an array by the specified list of indices.
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Pick keys from map
 Note that the order of the keys matches the pick order and non existent keys are skipped.
 
@@ -19,7 +13,7 @@ myMap:
   cat: meow
   dog: bark
   thing: hamster
-  hamster: squeek
+  hamster: squeak
 ```
 then
 ```bash
@@ -28,12 +22,36 @@ yq '.myMap |= pick(["hamster", "cat", "goat"])' sample.yml
 will output
 ```yaml
 myMap:
-  hamster: squeek
+  hamster: squeak
   cat: meow
 ```
 
+## Pick keys from map, included all the keys
+We create a map of the picked keys plus all the current keys, and run that through unique
+
+Given a sample.yml file of:
+```yaml
+myMap:
+  cat: meow
+  dog: bark
+  thing: hamster
+  hamster: squeak
+```
+then
+```bash
+yq '.myMap |= pick( (["thing"] + keys) | unique)' sample.yml
+```
+will output
+```yaml
+myMap:
+  thing: hamster
+  cat: meow
+  dog: bark
+  hamster: squeak
+```
+
 ## Pick indices from array
-Note that the order of the indexes matches the pick order and non existent indexes are skipped.
+Note that the order of the indices matches the pick order and non existent indices are skipped.
 
 Given a sample.yml file of:
 ```yaml

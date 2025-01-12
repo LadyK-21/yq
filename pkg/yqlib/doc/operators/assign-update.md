@@ -3,15 +3,14 @@
 This operator is used to update node values. It can be used in either the:
 
 ### plain form: `=`
-Which will assign the LHS node values to the RHS node values. The RHS expression is run against the matching nodes in the pipeline.
+Which will set the LHS node values equal to the RHS node values. The RHS expression is run against the matching nodes in the pipeline.
 
 ### relative form: `|=`
-This will do a similar thing to the plain form, however, the RHS expression is run against _the LHS nodes_. This is useful for updating values based on old values, e.g. increment.
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
+This will do a similar thing to the plain form, but the RHS expression is run with _each LHS node as context_. This is useful for updating values based on old values, e.g. increment.
 
-`yq e <exp> <file>`
-{% endhint %}
+
+### Flags
+- `c` clobber custom tags
 
 ## Create yaml file
 Running
@@ -204,7 +203,7 @@ a:
 ```
 
 ## Update node value that has an anchor
-Anchor will remaple
+Anchor will remain
 
 Given a sample.yml file of:
 ```yaml
@@ -233,5 +232,39 @@ will output
 a:
   b:
     - bogs
+```
+
+## Custom types are maintained by default
+Given a sample.yml file of:
+```yaml
+a: !cat meow
+b: !dog woof
+```
+then
+```bash
+yq '.a = .b' sample.yml
+```
+will output
+```yaml
+a: !cat woof
+b: !dog woof
+```
+
+## Custom types: clobber
+Use the `c` option to clobber custom tags
+
+Given a sample.yml file of:
+```yaml
+a: !cat meow
+b: !dog woof
+```
+then
+```bash
+yq '.a =c .b' sample.yml
+```
+will output
+```yaml
+a: !dog woof
+b: !dog woof
 ```
 

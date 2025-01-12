@@ -96,6 +96,17 @@ testBasicExpressionFromFile() {
   assertEquals '{"xyz":"meow","cool":"frog"}' "$X"
 }
 
+testBasicExpressionFromFileDos() {
+  ./yq -n ".xyz = 123" > test.yml
+  echo '.xyz = "meow" | .cool = "frog"' | sed 's/$'"/`echo \\\r`/" > instructions.txt
+  
+  X=$(./yq --from-file instructions.txt test.yml -o=j -I=0)
+  assertEquals '{"xyz":"meow","cool":"frog"}' "$X"
+
+  X=$(./yq ea --from-file instructions.txt test.yml -o=j -I=0)
+  assertEquals '{"xyz":"meow","cool":"frog"}' "$X"
+}
+
 testBasicGitHubAction() {
   ./yq -n ".a = 123" > test.yml
   X=$(cat /dev/null | ./yq test.yml)
@@ -143,7 +154,7 @@ testBasicCatWithFilesNoDash() {
 }
 
 # when the nullinput flag is used
-# dont automatically read STDIN (this breaks github actions)
+# don't automatically read STDIN (this breaks github actions)
 testBasicCreateFileGithubAction() {
   cat /dev/null | ./yq -n ".a = 123" > test.yml
 }
@@ -302,7 +313,7 @@ testBasicExitStatusNoEval() {
   assertEquals 1 "$?"
 }
 
-testBasicExtractFieldWithSeperator() {
+testBasicExtractFieldWithSeparator() {
     cat >test.yml <<EOL
 ---
 name: chart-name
@@ -312,7 +323,7 @@ EOL
   assertEquals "chart-name" "$X"
 }
 
-testBasicExtractMultipleFieldWithSeperator() {
+testBasicExtractMultipleFieldWithSeparator() {
     cat >test.yml <<EOL
 ---
 name: chart-name
@@ -351,6 +362,12 @@ EOM
   assertEquals "$expected" "$X"
 }
 
-
+testBasicClosedStdIn() {
+  cat >test.yml <<EOL
+a: 1
+EOL
+  X=$(./yq e '.a' test.yml <&-)
+  assertEquals "1" "$X"
+}
 
 source ./scripts/shunit2

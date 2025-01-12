@@ -29,7 +29,7 @@ It pipes the current, lets call it 'root' context through the `lhs` expression o
 cat
 ```
 
-Sidenote: this node holds not only its value 'cat', but comments and metadata too, including path and parent information.
+Side note: this node holds not only its value 'cat', but comments and metadata too, including path and parent information.
 
 The `=` operator then pipes the 'root' context through the `rhs` expression of `.b` to return the node
 
@@ -37,7 +37,7 @@ The `=` operator then pipes the 'root' context through the `rhs` expression of `
 dog
 ```
 
-Both sides have now been evaluated, so now the operator copies across the value from the RHS (`.b`) to the the LHS (`.a`), and it returns the now updated context:
+Both sides have now been evaluated, so now the operator copies across the value from the RHS (`.b`) to the LHS (`.a`), and it returns the now updated context:
 
 ```yaml
 a: dog

@@ -3,7 +3,7 @@
 Various operators for parsing and manipulating dates. 
 
 ## Date time formattings
-This uses the golangs built in time library for parsing and formatting date times.
+This uses Golang's built in time library for parsing and formatting date times.
 
 When not specified, the RFC3339 standard is assumed `2006-01-02T15:04:05Z07:00` for parsing.
 
@@ -13,23 +13,17 @@ To specify a custom parsing format, use the `with_dtf` operator. The first param
 yq 'with_dtf("myformat"; .a + "3h" | tz("Australia/Melbourne"))'
 ```
 
-See https://pkg.go.dev/time#pkg-constants for examples of formatting options.
+See the [library docs](https://pkg.go.dev/time#pkg-constants) for examples of formatting options.
 
 
 ## Timezones
-This uses golangs built in LoadLocation function to parse timezones strings. See https://pkg.go.dev/time#LoadLocation for more details.
+This uses Golang's built in LoadLocation function to parse timezones strings. See the [library docs](https://pkg.go.dev/time#LoadLocation) for more details.
 
 
 ## Durations
-Durations are parsed using golangs built in [ParseDuration](https://pkg.go.dev/time#ParseDuration) function.
+Durations are parsed using Golang's built in [ParseDuration](https://pkg.go.dev/time#ParseDuration) function.
 
-You can durations to time using the `+` operator.
-
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
+You can add durations to time using the `+` operator.
 
 ## Format: from standard RFC3339 format
 Providing a single parameter assumes a standard RFC3339 datetime format. If the target format is not a valid yaml datetime format, the result will be a string tagged node.
@@ -66,7 +60,7 @@ a: 2001-12-15
 ## Format: get the day of the week
 Given a sample.yml file of:
 ```yaml
-a: 2001-12-15T02:59:43.1Z
+a: 2001-12-15
 ```
 then
 ```bash
@@ -90,6 +84,30 @@ will output
 ```yaml
 a: cool
 updated: 2021-05-19T01:02:03Z
+```
+
+## From Unix
+Converts from unix time. Note, you don't have to pipe through the tz operator :)
+
+Running
+```bash
+yq --null-input '1675301929 | from_unix | tz("UTC")'
+```
+will output
+```yaml
+2023-02-02T01:38:49Z
+```
+
+## To Unix
+Converts to unix time
+
+Running
+```bash
+yq --null-input 'now | to_unix'
+```
+will output
+```yaml
+1621386123
 ```
 
 ## Timezone: from standard RFC3339 format
@@ -156,7 +174,7 @@ a: 2021-01-01T03:10:00Z
 ```
 
 ## Date subtraction
-You can subtract durations from dates. Assumes RFC3339 date time format, see [date-time operators](https://mikefarah.gitbook.io/yq/operators/date-time-operators) for more information.
+You can subtract durations from dates. Assumes RFC3339 date time format, see [date-time operators](https://mikefarah.gitbook.io/yq/operators/datetime#date-time-formattings) for more information.
 
 Given a sample.yml file of:
 ```yaml

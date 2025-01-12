@@ -16,10 +16,10 @@ var alternativeOperatorScenarios = []expressionScenario{
 	},
 	{
 		skipDoc:    true,
-		expression: `(.b // "hello") as $x`,
+		expression: `(.b // "hello") as $x | .`,
 		document:   `a: bridge`,
 		expected: []string{
-			"D0, P[], (doc)::a: bridge\n",
+			"D0, P[], (!!map)::a: bridge\n",
 		},
 	},
 	{
@@ -83,6 +83,24 @@ var alternativeOperatorScenarios = []expressionScenario{
 		expression: `false // true`,
 		expected: []string{
 			"D0, P[], (!!bool)::true\n",
+		},
+	},
+	{
+		description:    "Update or create - entity exists",
+		subdescription: "This initialises `a` if it's not present",
+		expression:     "(.a // (.a = 0)) += 1",
+		document:       `a: 1`,
+		expected: []string{
+			"D0, P[], (!!map)::a: 2\n",
+		},
+	},
+	{
+		description:    "Update or create - entity does not exist",
+		subdescription: "This initialises `a` if it's not present",
+		expression:     "(.a // (.a = 0)) += 1",
+		document:       `b: camel`,
+		expected: []string{
+			"D0, P[], (!!map)::b: camel\na: 1\n",
 		},
 	},
 }

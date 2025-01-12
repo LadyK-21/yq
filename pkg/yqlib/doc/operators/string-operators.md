@@ -1,7 +1,7 @@
 # String Operators
 
 ## RegEx
-This uses golangs native regex functions under the hood - See their [docs](https://github.com/google/re2/wiki/Syntax) for the supported syntax.
+This uses Golang's native regex functions under the hood - See their [docs](https://github.com/google/re2/wiki/Syntax) for the supported syntax.
 
 Case insensitive tip: prefix the regex with `(?i)` - e.g. `test("(?i)cats)"`.
 
@@ -15,7 +15,7 @@ Capture returns named RegEx capture groups in a map. Can be more convenient than
 Returns true if the string matches the RegEx, false otherwise.
 
 ## sub(regEx, replacement)
-Substitutes matched substrings. The first parameter is the regEx to match substrings within the original string. The second is a what to replace those matches with. This can refer to capture groups from the first RegEx.
+Substitutes matched substrings. The first parameter is the regEx to match substrings within the original string. The second parameter specifies what to replace those matches with. This can refer to capture groups from the first RegEx.
 
 ## String blocks, bash and newlines
 Bash is notorious for chomping on precious trailing newline characters, making it tricky to set strings with newlines properly. In particular, the `$( exp )` _will trim trailing newlines_.
@@ -27,7 +27,7 @@ a: |
   cat
 ```
 
-Using `$( exp )` wont work, as it will trim the trailing new line.
+Using `$( exp )` wont work, as it will trim the trailing newline.
 
 ```
 m=$(echo "cat\n") yq -n '.a = strenv(m)'
@@ -49,18 +49,46 @@ a: |
   cat
 ```
 
-Similarly, if you're trying to set the content from a file, and want a trailing new line:
+Similarly, if you're trying to set the content from a file, and want a trailing newline:
 
 ```
 IFS= read -rd '' output < <(cat my_file)
 output=$output ./yq '.data.values = strenv(output)' first.yml
 ```
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
+## Interpolation
+Given a sample.yml file of:
+```yaml
+value: things
+another: stuff
+```
+then
+```bash
+yq '.message = "I like \(.value) and \(.another)"' sample.yml
+```
+will output
+```yaml
+value: things
+another: stuff
+message: I like things and stuff
+```
 
-`yq e <exp> <file>`
-{% endhint %}
+## Interpolation - not a string
+Given a sample.yml file of:
+```yaml
+value:
+  an: apple
+```
+then
+```bash
+yq '.message = "I like \(.value)"' sample.yml
+```
+will output
+```yaml
+value:
+  an: apple
+message: 'I like an: apple'
+```
 
 ## To up (upper) case
 Works with unicode characters
@@ -110,6 +138,26 @@ yq 'join("; ")' sample.yml
 will output
 ```yaml
 cat; meow; 1; ; true
+```
+
+## Trim strings
+Given a sample.yml file of:
+```yaml
+- ' cat'
+- 'dog '
+- ' cow cow '
+- horse
+```
+then
+```bash
+yq '.[] | trim' sample.yml
+```
+will output
+```yaml
+cat
+dog
+cow cow
+horse
 ```
 
 ## Match string
@@ -284,7 +332,7 @@ false
 ```
 
 ## Substitute / Replace string
-This uses golang regex, described [here](https://github.com/google/re2/wiki/Syntax)
+This uses Golang's regex, described [here](https://github.com/google/re2/wiki/Syntax).
 Note the use of `|=` to run in context of the current string value.
 
 Given a sample.yml file of:
@@ -301,7 +349,7 @@ a: cats are great
 ```
 
 ## Substitute / Replace string with regex
-This uses golang regex, described [here](https://github.com/google/re2/wiki/Syntax)
+This uses Golang's regex, described [here](https://github.com/google/re2/wiki/Syntax).
 Note the use of `|=` to run in context of the current string value.
 
 Given a sample.yml file of:
@@ -367,5 +415,34 @@ yq 'split("; ")' sample.yml
 will output
 ```yaml
 - word
+```
+
+## To string
+Note that you may want to force `yq` to leave scalar values wrapped by passing in `--unwrapScalar=false` or `-r=f`
+
+Given a sample.yml file of:
+```yaml
+- 1
+- true
+- null
+- ~
+- cat
+- an: object
+- - array
+  - 2
+```
+then
+```bash
+yq '.[] |= to_string' sample.yml
+```
+will output
+```yaml
+- "1"
+- "true"
+- "null"
+- "~"
+- cat
+- "an: object"
+- "- array\n- 2"
 ```
 

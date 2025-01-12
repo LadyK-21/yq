@@ -1,6 +1,6 @@
 # Recursive Descent (Glob)
 
-This operator recursively matches (or globs) all children nodes given of a particular element, including that node itself. This is most often used to apply a filter recursively against all matches. It can be used in either the 
+This operator recursively matches (or globs) all children nodes given of a particular element, including that node itself. This is most often used to apply a filter recursively against all matches.
 
 ## match values form `..`
 This will, like the `jq` equivalent, recursively match all _value_ nodes. Use it to find/manipulate particular values.
@@ -12,19 +12,13 @@ yq '.. style= "flow"' file.yaml
 ```
 
 ## match values and map keys form `...`
-The also includes map keys in the results set. This is particularly useful in YAML as unlike JSON, map keys can have their own styling, tags and use anchors and aliases.
+The also includes map keys in the results set. This is particularly useful in YAML as unlike JSON, map keys can have their own styling and tags and also use anchors and aliases.
 
 For instance to set the `style` of all nodes in a yaml doc, including the map keys:
 
 ```bash
 yq '... style= "flow"' file.yaml
 ```
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Recurse map (values only)
 Given a sample.yml file of:
 ```yaml

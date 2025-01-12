@@ -2,12 +2,6 @@
 
 Returns the line of the matching node. Starts from 1, 0 indicates there was no line data.
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Returns line of _value_ node
 Given a sample.yml file of:
 ```yaml
@@ -35,7 +29,7 @@ b:
 ```
 then
 ```bash
-yq '.b | key| line' sample.yml
+yq '.b | key | line' sample.yml
 ```
 will output
 ```yaml

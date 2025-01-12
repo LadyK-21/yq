@@ -1,14 +1,9 @@
 # JSON
 
-Encode and decode to and from JSON. Note that YAML is a _superset_ of JSON - so `yq` can read any json file without doing anything special.
+Encode and decode to and from JSON. Supports multiple JSON documents in a single file (e.g. NDJSON).
 
-This means you don't need to 'convert' a JSON file to YAML - however if you want idiomatic YAML styling, then you can use the `-P/--prettyPrint` flag, see examples below.
+Note that YAML is a superset of (single document) JSON - so you don't have to use the JSON parser to read JSON when there is only one JSON document in the input. You will probably want to pretty print the result in this case, to get idiomatic YAML styling.
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
 
 ## Parse json: simple
 JSON is a subset of yaml, so all you need to do is prettify the output
@@ -19,7 +14,7 @@ Given a sample.json file of:
 ```
 then
 ```bash
-yq -P '.' sample.json
+yq -p=json sample.json
 ```
 will output
 ```yaml
@@ -35,7 +30,7 @@ Given a sample.json file of:
 ```
 then
 ```bash
-yq -P '.' sample.json
+yq -p=json sample.json
 ```
 will output
 ```yaml
@@ -128,5 +123,129 @@ will output
 ```json
 {"stuff":"cool"}
 {"whatever":"cat"}
+```
+
+## Roundtrip JSON Lines / NDJSON
+Given a sample.json file of:
+```json
+{"this": "is a multidoc json file"}
+{"each": ["line is a valid json document"]}
+{"a number": 4}
+
+```
+then
+```bash
+yq -p=json -o=json -I=0 sample.json
+```
+will output
+```yaml
+{"this":"is a multidoc json file"}
+{"each":["line is a valid json document"]}
+{"a number":4}
+```
+
+## Roundtrip multi-document JSON
+The parser can also handle multiple multi-line json documents in a single file (despite this not being in the JSON Lines / NDJSON spec). Typically you would have one entire JSON document per line, but the parser also supports multiple multi-line json documents
+
+Given a sample.json file of:
+```json
+{
+	"this": "is a multidoc json file"
+}
+{
+	"it": [
+		"has",
+		"consecutive",
+		"json documents"
+	]
+}
+{
+	"a number": 4
+}
+
+```
+then
+```bash
+yq -p=json -o=json -I=2 sample.json
+```
+will output
+```yaml
+{
+  "this": "is a multidoc json file"
+}
+{
+  "it": [
+    "has",
+    "consecutive",
+    "json documents"
+  ]
+}
+{
+  "a number": 4
+}
+```
+
+## Update a specific document in a multi-document json
+Documents are indexed by the `documentIndex` or `di` operator.
+
+Given a sample.json file of:
+```json
+{"this": "is a multidoc json file"}
+{"each": ["line is a valid json document"]}
+{"a number": 4}
+
+```
+then
+```bash
+yq -p=json -o=json -I=0 '(select(di == 1) | .each ) += "cool"' sample.json
+```
+will output
+```yaml
+{"this":"is a multidoc json file"}
+{"each":["line is a valid json document","cool"]}
+{"a number":4}
+```
+
+## Find and update a specific document in a multi-document json
+Use expressions as you normally would.
+
+Given a sample.json file of:
+```json
+{"this": "is a multidoc json file"}
+{"each": ["line is a valid json document"]}
+{"a number": 4}
+
+```
+then
+```bash
+yq -p=json -o=json -I=0 '(select(has("each")) | .each ) += "cool"' sample.json
+```
+will output
+```yaml
+{"this":"is a multidoc json file"}
+{"each":["line is a valid json document","cool"]}
+{"a number":4}
+```
+
+## Decode JSON Lines / NDJSON
+Given a sample.json file of:
+```json
+{"this": "is a multidoc json file"}
+{"each": ["line is a valid json document"]}
+{"a number": 4}
+
+```
+then
+```bash
+yq -p=json sample.json
+```
+will output
+```yaml
+this: is a multidoc json file
+---
+each:
+  - line is a valid json document
+---
+a number: 4
 ```
 

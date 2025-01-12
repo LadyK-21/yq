@@ -3,12 +3,6 @@
 This is used to filter out duplicated items in an array. Note that the original order of the array is maintained.
 
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Unique array of scalars (string/numbers)
 Note that unique maintains the original order of the array.
 
@@ -69,7 +63,29 @@ will output
 - ~
 ```
 
-## Unique array object fields
+## Unique array objects
+Given a sample.yml file of:
+```yaml
+- name: harry
+  pet: cat
+- name: billy
+  pet: dog
+- name: harry
+  pet: cat
+```
+then
+```bash
+yq 'unique' sample.yml
+```
+will output
+```yaml
+- name: harry
+  pet: cat
+- name: billy
+  pet: dog
+```
+
+## Unique array of objects by a field
 Given a sample.yml file of:
 ```yaml
 - name: harry
@@ -89,5 +105,27 @@ will output
   pet: cat
 - name: billy
   pet: dog
+```
+
+## Unique array of arrays
+Given a sample.yml file of:
+```yaml
+- - cat
+  - dog
+- - cat
+  - sheep
+- - cat
+  - dog
+```
+then
+```bash
+yq 'unique' sample.yml
+```
+will output
+```yaml
+- - cat
+  - dog
+- - cat
+  - sheep
 ```
 

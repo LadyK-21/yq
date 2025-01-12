@@ -2,12 +2,6 @@
 
 Use the `keys` operator to return map keys or array indices. 
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Map keys
 Given a sample.yml file of:
 ```yaml
@@ -116,5 +110,45 @@ yq '.a.x | key | headComment' sample.yml
 will output
 ```yaml
 comment on key
+```
+
+## Check node is a key
+Given a sample.yml file of:
+```yaml
+a:
+  b:
+    - cat
+  c: frog
+```
+then
+```bash
+yq '[... | { "p": path | join("."), "isKey": is_key, "tag": tag }]' sample.yml
+```
+will output
+```yaml
+- p: ""
+  isKey: false
+  tag: '!!map'
+- p: a
+  isKey: true
+  tag: '!!str'
+- p: a
+  isKey: false
+  tag: '!!map'
+- p: a.b
+  isKey: true
+  tag: '!!str'
+- p: a.b
+  isKey: false
+  tag: '!!seq'
+- p: a.b.0
+  isKey: false
+  tag: '!!str'
+- p: a.c
+  isKey: true
+  tag: '!!str'
+- p: a.c
+  isKey: false
+  tag: '!!str'
 ```
 

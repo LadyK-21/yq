@@ -10,7 +10,17 @@ var sortKeysOperatorScenarios = []expressionScenario{
 		document:    `{c: frog, a: blah, b: bing}`,
 		expression:  `sort_keys(.)`,
 		expected: []string{
-			"D0, P[], (doc)::{a: blah, b: bing, c: frog}\n",
+			"D0, P[], (!!map)::{a: blah, b: bing, c: frog}\n",
+		},
+	},
+	{
+		description: "Sort keys of map",
+		skipDoc:     true,
+		document:    `{c: frog, a: zoo}`,
+		expression:  `sort_keys(.)[]`,
+		expected: []string{
+			"D0, P[a], (!!str)::zoo\n",
+			"D0, P[c], (!!str)::frog\n",
 		},
 	},
 	{
@@ -18,7 +28,7 @@ var sortKeysOperatorScenarios = []expressionScenario{
 		document:   `{c: frog}`,
 		expression: `sort_keys(.d)`,
 		expected: []string{
-			"D0, P[], (doc)::{c: frog}\n",
+			"D0, P[], (!!map)::{c: frog}\n",
 		},
 	},
 	{

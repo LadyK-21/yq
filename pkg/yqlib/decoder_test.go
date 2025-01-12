@@ -3,6 +3,7 @@ package yqlib
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"strings"
 )
 
@@ -15,21 +16,24 @@ type formatScenario struct {
 	subdescription string
 	skipDoc        bool
 	scenarioType   string
+	expectedError  string
 }
 
-func processFormatScenario(s formatScenario, decoder Decoder, encoder Encoder) string {
-
+func processFormatScenario(s formatScenario, decoder Decoder, encoder Encoder) (string, error) {
 	var output bytes.Buffer
 	writer := bufio.NewWriter(&output)
 
 	if decoder == nil {
-		decoder = NewYamlDecoder()
+		decoder = NewYamlDecoder(ConfiguredYamlPreferences)
 	}
 
+	log.Debugf("reading docs")
 	inputs, err := readDocuments(strings.NewReader(s.input), "sample.yml", 0, decoder)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
+
+	log.Debugf("done reading the documents")
 
 	expression := s.expression
 	if expression == "" {
@@ -39,22 +43,33 @@ func processFormatScenario(s formatScenario, decoder Decoder, encoder Encoder) s
 	exp, err := getExpressionParser().ParseExpression(expression)
 
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	context, err := NewDataTreeNavigator().GetMatchingNodes(Context{MatchingNodes: inputs}, exp)
 
+	log.Debugf("Going to print: %v", NodesToString(context.MatchingNodes))
+
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	printer := NewPrinter(encoder, NewSinglePrinterWriter(writer))
 	err = printer.PrintResults(context.MatchingNodes)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	writer.Flush()
 
-	return output.String()
+	return output.String(), nil
+}
+
+func mustProcessFormatScenario(s formatScenario, decoder Decoder, encoder Encoder) string {
+
+	result, err := processFormatScenario(s, decoder, encoder)
+	if err != nil {
+		panic(fmt.Errorf("Bad scenario %v: %w", s.description, err))
+	}
+	return result
 
 }

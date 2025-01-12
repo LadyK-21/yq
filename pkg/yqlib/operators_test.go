@@ -14,12 +14,12 @@ import (
 
 	"github.com/mikefarah/yq/v4/test"
 	logging "gopkg.in/op/go-logging.v1"
-	yaml "gopkg.in/yaml.v3"
 )
 
 type expressionScenario struct {
 	description           string
 	subdescription        string
+	explanation           []string
 	environmentVariables  map[string]string
 	document              string
 	document2             string
@@ -28,10 +28,13 @@ type expressionScenario struct {
 	skipDoc               bool
 	expectedError         string
 	dontFormatInputForDoc bool // dont format input doc for documentation generation
+	requiresFormat        string
 }
 
 func TestMain(m *testing.M) {
 	logging.SetLevel(logging.ERROR, "")
+	ConfiguredYamlPreferences.ColorsEnabled = false
+	ConfiguredJSONPreferences.ColorsEnabled = false
 	Now = func() time.Time {
 		return time.Date(2021, time.May, 19, 1, 2, 3, 4, time.UTC)
 	}
@@ -39,22 +42,18 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func NewSimpleYamlPrinter(writer io.Writer, outputFormat PrinterOutputFormat, unwrapScalar bool, colorsEnabled bool, indent int, printDocSeparators bool) Printer {
-	return NewPrinter(NewYamlEncoder(indent, colorsEnabled, printDocSeparators, unwrapScalar), NewSinglePrinterWriter(writer))
+func NewSimpleYamlPrinter(writer io.Writer, unwrapScalar bool, indent int, printDocSeparators bool) Printer {
+	prefs := ConfiguredYamlPreferences.Copy()
+	prefs.PrintDocSeparators = printDocSeparators
+	prefs.UnwrapScalar = unwrapScalar
+	prefs.Indent = indent
+	return NewPrinter(NewYamlEncoder(prefs), NewSinglePrinterWriter(writer))
 }
 
-func readDocumentWithLeadingContent(content string, fakefilename string, fakeFileIndex int) (*list.List, error) {
-	reader, firstFileLeadingContent, err := processReadStream(bufio.NewReader(strings.NewReader(content)))
-	if err != nil {
-		return nil, err
-	}
+func readDocument(content string, fakefilename string, fakeFileIndex int) (*list.List, error) {
+	reader := bufio.NewReader(strings.NewReader(content))
 
-	inputs, err := readDocuments(reader, fakefilename, fakeFileIndex, NewYamlDecoder())
-	if err != nil {
-		return nil, err
-	}
-	inputs.Front().Value.(*CandidateNode).LeadingContent = firstFileLeadingContent
-	return inputs, nil
+	return readDocuments(reader, fakefilename, fakeFileIndex, NewYamlDecoder(ConfiguredYamlPreferences))
 }
 
 func testScenario(t *testing.T, s *expressionScenario) {
@@ -67,7 +66,7 @@ func testScenario(t *testing.T, s *expressionScenario) {
 	inputs := list.New()
 
 	if s.document != "" {
-		inputs, err = readDocumentWithLeadingContent(s.document, "sample.yml", 0)
+		inputs, err = readDocument(s.document, "sample.yml", 0)
 
 		if err != nil {
 			t.Error(err, s.document, s.expression)
@@ -75,7 +74,7 @@ func testScenario(t *testing.T, s *expressionScenario) {
 		}
 
 		if s.document2 != "" {
-			moreInputs, err := readDocumentWithLeadingContent(s.document2, "another.yml", 1)
+			moreInputs, err := readDocument(s.document2, "another.yml", 1)
 			if err != nil {
 				t.Error(err, s.document2, s.expression)
 				return
@@ -84,10 +83,11 @@ func testScenario(t *testing.T, s *expressionScenario) {
 		}
 	} else {
 		candidateNode := &CandidateNode{
-			Document:  0,
-			Filename:  "",
-			Node:      &yaml.Node{Tag: "!!null", Kind: yaml.ScalarNode},
-			FileIndex: 0,
+			document:  0,
+			filename:  "",
+			Tag:       "!!null",
+			Kind:      ScalarNode,
+			fileIndex: 0,
 		}
 		inputs.PushBack(candidateNode)
 
@@ -100,10 +100,31 @@ func testScenario(t *testing.T, s *expressionScenario) {
 	context, err := NewDataTreeNavigator().GetMatchingNodes(Context{MatchingNodes: inputs}, node)
 
 	if s.expectedError != "" {
-		test.AssertResultComplexWithContext(t, s.expectedError, err.Error(), fmt.Sprintf("desc: %v\nexp: %v\ndoc: %v", s.description, s.expression, s.document))
+		if err == nil {
+			t.Errorf("Expected error '%v' but it worked!", s.expectedError)
+		} else {
+			test.AssertResultComplexWithContext(t, s.expectedError, err.Error(), fmt.Sprintf("desc: %v\nexp: %v\ndoc: %v", s.description, s.expression, s.document))
+		}
 		return
 	}
 
+	if s.requiresFormat != "" {
+		format := s.requiresFormat
+		inputFormat, err := FormatFromString(format)
+		if err != nil {
+			t.Error(err)
+		}
+		if decoder := inputFormat.DecoderFactory(); decoder == nil {
+			t.Skipf("no support for %s input format", format)
+		}
+		outputFormat, err := FormatFromString(format)
+		if err != nil {
+			t.Error(err)
+		}
+		if encoder := configureEncoder(outputFormat, 4); encoder == nil {
+			t.Skipf("no support for %s output format", format)
+		}
+	}
 	if err != nil {
 		t.Error(fmt.Errorf("%w: %v: %v", err, s.description, s.expression))
 		return
@@ -113,7 +134,8 @@ func testScenario(t *testing.T, s *expressionScenario) {
 
 func resultToString(t *testing.T, n *CandidateNode) string {
 	var valueBuffer bytes.Buffer
-	printer := NewSimpleYamlPrinter(bufio.NewWriter(&valueBuffer), YamlOutputFormat, true, false, 4, true)
+	log.Debugf("printing result %v", NodeToString(n))
+	printer := NewSimpleYamlPrinter(bufio.NewWriter(&valueBuffer), true, 4, true)
 
 	err := printer.PrintResults(n.AsList())
 	if err != nil {
@@ -121,13 +143,11 @@ func resultToString(t *testing.T, n *CandidateNode) string {
 		return ""
 	}
 
-	tag := n.Node.Tag
-	if n.Node.Kind == yaml.DocumentNode {
-		tag = "doc"
-	} else if n.Node.Kind == yaml.AliasNode {
+	tag := n.Tag
+	if n.Kind == AliasNode {
 		tag = "alias"
 	}
-	return fmt.Sprintf(`D%v, P%v, (%v)::%v`, n.Document, n.Path, tag, valueBuffer.String())
+	return fmt.Sprintf(`D%v, P%v, (%v)::%v`, n.GetDocument(), n.GetPath(), tag, valueBuffer.String())
 }
 
 func resultsToString(t *testing.T, results *list.List) []string {
@@ -165,14 +185,14 @@ func copySnippet(source string, out *os.File) error {
 
 func formatYaml(yaml string, filename string) string {
 	var output bytes.Buffer
-	printer := NewSimpleYamlPrinter(bufio.NewWriter(&output), YamlOutputFormat, true, false, 2, true)
+	printer := NewSimpleYamlPrinter(bufio.NewWriter(&output), true, 2, true)
 
 	node, err := getExpressionParser().ParseExpression(".. style= \"\"")
 	if err != nil {
 		panic(err)
 	}
 	streamEvaluator := NewStreamEvaluator()
-	_, err = streamEvaluator.Evaluate(filename, strings.NewReader(yaml), node, printer, "", NewYamlDecoder())
+	_, err = streamEvaluator.Evaluate(filename, strings.NewReader(yaml), node, printer, NewYamlDecoder(ConfiguredYamlPreferences))
 	if err != nil {
 		panic(err)
 	}
@@ -239,6 +259,14 @@ func documentOperatorScenario(t *testing.T, w *bufio.Writer, i interface{}) {
 	writeOrPanic(w, "will output\n")
 
 	documentOutput(t, w, s, formattedDoc, formattedDoc2)
+
+	if len(s.explanation) > 0 {
+		writeOrPanic(w, "### Explanation:\n")
+		for _, text := range s.explanation {
+			writeOrPanic(w, fmt.Sprintf("- %v\n", text))
+		}
+		writeOrPanic(w, "\n")
+	}
 }
 
 func documentInput(w *bufio.Writer, s expressionScenario) (string, string) {
@@ -292,7 +320,7 @@ func documentInput(w *bufio.Writer, s expressionScenario) (string, string) {
 		writeOrPanic(w, "then\n")
 
 		if s.expression != "" {
-			writeOrPanic(w, fmt.Sprintf("```bash\n%vyq %v'%v' %v\n```\n", envCommand, command, s.expression, files))
+			writeOrPanic(w, fmt.Sprintf("```bash\n%vyq %v'%v' %v\n```\n", envCommand, command, strings.ReplaceAll(s.expression, "'", `'\''`), files))
 		} else {
 			writeOrPanic(w, fmt.Sprintf("```bash\n%vyq %v%v\n```\n", envCommand, command, files))
 		}
@@ -306,7 +334,7 @@ func documentInput(w *bufio.Writer, s expressionScenario) (string, string) {
 func documentOutput(t *testing.T, w *bufio.Writer, s expressionScenario, formattedDoc string, formattedDoc2 string) {
 	var output bytes.Buffer
 	var err error
-	printer := NewSimpleYamlPrinter(bufio.NewWriter(&output), YamlOutputFormat, true, false, 2, true)
+	printer := NewSimpleYamlPrinter(bufio.NewWriter(&output), true, 2, true)
 
 	node, err := getExpressionParser().ParseExpression(s.expression)
 	if err != nil {
@@ -318,13 +346,13 @@ func documentOutput(t *testing.T, w *bufio.Writer, s expressionScenario, formatt
 
 	if s.document != "" {
 
-		inputs, err = readDocumentWithLeadingContent(formattedDoc, "sample.yml", 0)
+		inputs, err = readDocument(formattedDoc, "sample.yml", 0)
 		if err != nil {
 			t.Error(err, s.document, s.expression)
 			return
 		}
 		if s.document2 != "" {
-			moreInputs, err := readDocumentWithLeadingContent(formattedDoc2, "another.yml", 1)
+			moreInputs, err := readDocument(formattedDoc2, "another.yml", 1)
 			if err != nil {
 				t.Error(err, s.document, s.expression)
 				return
@@ -333,10 +361,11 @@ func documentOutput(t *testing.T, w *bufio.Writer, s expressionScenario, formatt
 		}
 	} else {
 		candidateNode := &CandidateNode{
-			Document:  0,
-			Filename:  "",
-			Node:      &yaml.Node{Tag: "!!null", Kind: yaml.ScalarNode},
-			FileIndex: 0,
+			document:  0,
+			filename:  "",
+			Tag:       "!!null",
+			Kind:      ScalarNode,
+			fileIndex: 0,
 		}
 		inputs.PushBack(candidateNode)
 

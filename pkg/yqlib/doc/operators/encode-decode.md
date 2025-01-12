@@ -9,27 +9,23 @@ These operators are useful to process yaml documents that have stringified embed
 
 | Format | Decode (from string) | Encode (to string) |
 | --- | -- | --|
-| Yaml | from_yaml | to_yaml(i)/@yaml |
-| JSON | from_json | to_json(i)/@json |
-| Properties | from_props  | to_props/@props |
-| CSV |  | to_csv/@csv |
-| TSV |  | to_tsv/@tsv |
-| XML | from_xml | to_xml(i)/@xml |
+| Yaml | from_yaml/@yamld | to_yaml(i)/@yaml |
+| JSON | from_json/@jsond | to_json(i)/@json |
+| Properties | from_props/@propsd  | to_props/@props |
+| CSV | from_csv/@csvd | to_csv/@csv |
+| TSV | from_tsv/@tsvd | to_tsv/@tsv |
+| XML | from_xml/@xmld | to_xml(i)/@xml |
 | Base64 | @base64d | @base64 |
+| URI | @urid | @uri |
+| Shell |  | @sh |
 
 
-CSV and TSV format both accept either a single array or scalars (representing a single row), or an array of array of scalars (representing multiple rows). 
+See CSV and TSV [documentation](https://mikefarah.gitbook.io/yq/usage/csv-tsv) for accepted formats.
 
 XML uses the `--xml-attribute-prefix` and `xml-content-name` flags to identify attributes and content fields.
 
 
-Base64 assumes [rfc4648](https://rfc-editor.org/rfc/rfc4648.html) encoding. Encoding and decoding both assume that the content is a string.
-
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
+Base64 assumes [rfc4648](https://rfc-editor.org/rfc/rfc4648.html) encoding. Encoding and decoding both assume that the content is a utf-8 string and not binary content.
 
 ## Encode value as json string
 Given a sample.yml file of:
@@ -132,13 +128,49 @@ a: |-
 ```
 then
 ```bash
-yq '.a |= from_props' sample.yml
+yq '.a |= @propsd' sample.yml
 ```
 will output
 ```yaml
 a:
   cats: great
   dogs: cool as well
+```
+
+## Decode csv encoded string
+Given a sample.yml file of:
+```yaml
+a: |-
+  cats,dogs
+  great,cool as well
+```
+then
+```bash
+yq '.a |= @csvd' sample.yml
+```
+will output
+```yaml
+a:
+  - cats: great
+    dogs: cool as well
+```
+
+## Decode tsv encoded string
+Given a sample.yml file of:
+```yaml
+a: |-
+  cats	dogs
+  great	cool as well
+```
+then
+```bash
+yq '.a |= @tsvd' sample.yml
+```
+will output
+```yaml
+a:
+  - cats: great
+    dogs: cool as well
 ```
 
 ## Encode value as yaml string
@@ -277,7 +309,7 @@ cat,"thing1,thing2",true,3.40
 dog,thing3,false,12
 ```
 
-## Encode array of array scalars as tsv string
+## Encode array of arrays as tsv string
 Scalars are strings, numbers and booleans.
 
 Given a sample.yml file of:
@@ -307,7 +339,7 @@ Given a sample.yml file of:
 a:
   cool:
     foo: bar
-    +id: hi
+    +@id: hi
 ```
 then
 ```bash
@@ -327,7 +359,7 @@ Given a sample.yml file of:
 a:
   cool:
     foo: bar
-    +id: hi
+    +@id: hi
 ```
 then
 ```bash
@@ -345,7 +377,7 @@ Given a sample.yml file of:
 a:
   cool:
     foo: bar
-    +id: hi
+    +@id: hi
 ```
 then
 ```bash
@@ -403,6 +435,50 @@ yq '@yaml | @base64' sample.yml
 will output
 ```yaml
 YTogYXBwbGUK
+```
+
+## Encode a string to uri
+Given a sample.yml file of:
+```yaml
+coolData: this has & special () characters *
+```
+then
+```bash
+yq '.coolData | @uri' sample.yml
+```
+will output
+```yaml
+this+has+%26+special+%28%29+characters+%2A
+```
+
+## Decode a URI to a string
+Given a sample.yml file of:
+```yaml
+this+has+%26+special+%28%29+characters+%2A
+```
+then
+```bash
+yq '@urid' sample.yml
+```
+will output
+```yaml
+this has & special () characters *
+```
+
+## Encode a string to sh
+Sh/Bash friendly string
+
+Given a sample.yml file of:
+```yaml
+coolData: strings with spaces and a 'quote'
+```
+then
+```bash
+yq '.coolData | @sh' sample.yml
+```
+will output
+```yaml
+strings' with spaces and a '\'quote\'
 ```
 
 ## Decode a base64 encoded string

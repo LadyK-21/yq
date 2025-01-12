@@ -1,12 +1,6 @@
 # Subtract
 
-You can use subtract to subtract numbers, as well as removing elements from an array.
-
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
+You can use subtract to subtract numbers as well as remove elements from an array.
 
 ## Array subtraction
 Running
@@ -45,24 +39,6 @@ yq '. - [{"c": "d", "a": "b"}]' sample.yml
 will output
 ```yaml
 - a: b
-```
-
-## Number subtraction - float
-If the lhs or rhs are floats then the expression will be calculated with floats.
-
-Given a sample.yml file of:
-```yaml
-a: 3
-b: 4.5
-```
-then
-```bash
-yq '.a = .a - .b' sample.yml
-```
-will output
-```yaml
-a: -1.5
-b: 4.5
 ```
 
 ## Number subtraction - float

@@ -10,13 +10,10 @@ yq -i -P 'sort_keys(..)' file2.yml
 diff file1.yml file2.yml
 ```
 
-Note that `yq` does not yet consider anchors when sorting by keys - this may result in invalid yaml documents if your are using merge anchors.
+Note that `yq` does not yet consider anchors when sorting by keys - this may result in invalid yaml documents if you are using merge anchors.
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
+For more advanced sorting, using `to_entries` to convert the map to an array, then sort/process the array as you like (e.g. using `sort_by`) and convert back to a map using `from_entries`.
+See [here](https://mikefarah.gitbook.io/yq/operators/entries#custom-sort-map-keys) for an example. 
 
 ## Sort keys of map
 Given a sample.yml file of:

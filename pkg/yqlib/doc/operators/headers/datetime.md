@@ -3,7 +3,7 @@
 Various operators for parsing and manipulating dates. 
 
 ## Date time formattings
-This uses the golangs built in time library for parsing and formatting date times.
+This uses Golang's built in time library for parsing and formatting date times.
 
 When not specified, the RFC3339 standard is assumed `2006-01-02T15:04:05Z07:00` for parsing.
 
@@ -13,14 +13,14 @@ To specify a custom parsing format, use the `with_dtf` operator. The first param
 yq 'with_dtf("myformat"; .a + "3h" | tz("Australia/Melbourne"))'
 ```
 
-See https://pkg.go.dev/time#pkg-constants for examples of formatting options.
+See the [library docs](https://pkg.go.dev/time#pkg-constants) for examples of formatting options.
 
 
 ## Timezones
-This uses golangs built in LoadLocation function to parse timezones strings. See https://pkg.go.dev/time#LoadLocation for more details.
+This uses Golang's built in LoadLocation function to parse timezones strings. See the [library docs](https://pkg.go.dev/time#LoadLocation) for more details.
 
 
 ## Durations
-Durations are parsed using golangs built in [ParseDuration](https://pkg.go.dev/time#ParseDuration) function.
+Durations are parsed using Golang's built in [ParseDuration](https://pkg.go.dev/time#ParseDuration) function.
 
-You can durations to time using the `+` operator.
+You can add durations to time using the `+` operator.

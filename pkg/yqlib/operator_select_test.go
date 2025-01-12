@@ -10,7 +10,7 @@ var selectOperatorScenarios = []expressionScenario{
 		document:   `cat`,
 		expression: `select(false, true)`,
 		expected: []string{
-			"D0, P[], (doc)::cat\n",
+			"D0, P[], (!!str)::cat\n",
 		},
 	},
 	{
@@ -18,7 +18,7 @@ var selectOperatorScenarios = []expressionScenario{
 		document:   `cat`,
 		expression: `select(true, false)`,
 		expected: []string{
-			"D0, P[], (doc)::cat\n",
+			"D0, P[], (!!str)::cat\n",
 		},
 	},
 	{
@@ -57,7 +57,7 @@ var selectOperatorScenarios = []expressionScenario{
 	},
 	{
 		description:    "Select elements from array with regular expression",
-		subdescription: "See more regular expression examples under the `string` operator docs.",
+		subdescription: "See more regular expression examples under the [`string` operator docs](https://mikefarah.gitbook.io/yq/operators/string-operators).",
 		document:       `[this_0, not_this, nor_0_this, thisTo_4]`,
 		expression:     `.[] | select(test("[a-zA-Z]+_[0-9]$"))`,
 		expected: []string{
@@ -71,16 +71,28 @@ var selectOperatorScenarios = []expressionScenario{
 		document2:  "b: world",
 		expression: `select(.a == "hello" or .b == "world")`,
 		expected: []string{
-			"D0, P[], (doc)::a: hello\n",
-			"D0, P[], (doc)::b: world\n",
+			"D0, P[], (!!map)::a: hello\n",
+			"D0, P[], (!!map)::b: world\n",
 		},
 	},
 	{
-		skipDoc:    true,
-		document:   `[{animal: cat, legs: {cool: true}}, {animal: fish}]`,
-		expression: `(.[] | select(.legs.cool == true).canWalk) = true | (.[] | .alive.things) = "yes"`,
+		description: "select splat",
+		skipDoc:     true,
+		document:    "a: hello",
+		document2:   "b: world",
+		expression:  `select(.a == "hello" or .b == "world")[]`,
 		expected: []string{
-			"D0, P[], (doc)::[{animal: cat, legs: {cool: true}, canWalk: true, alive: {things: yes}}, {animal: fish, alive: {things: yes}}]\n",
+			"D0, P[a], (!!str)::hello\n",
+			"D0, P[b], (!!str)::world\n",
+		},
+	},
+	{
+		description: "select does not update the map",
+		skipDoc:     true,
+		document:    `[{animal: cat, legs: {cool: true}}, {animal: fish}]`,
+		expression:  `(.[] | select(.legs.cool == true).canWalk) = true | (.[] | .alive.things) = "yes"`,
+		expected: []string{
+			"D0, P[], (!!seq)::[{animal: cat, legs: {cool: true}, canWalk: true, alive: {things: yes}}, {animal: fish, alive: {things: yes}}]\n",
 		},
 	},
 	{
@@ -120,7 +132,7 @@ var selectOperatorScenarios = []expressionScenario{
 		document:       `a: { things: cat, bob: goat, horse: dog }`,
 		expression:     `(.a.[] | select(. == "cat" or . == "goat")) |= "rabbit"`,
 		expected: []string{
-			"D0, P[], (doc)::a: {things: rabbit, bob: rabbit, horse: dog}\n",
+			"D0, P[], (!!map)::a: {things: rabbit, bob: rabbit, horse: dog}\n",
 		},
 	},
 	{

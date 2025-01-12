@@ -9,12 +9,6 @@ Add behaves differently according to the type of the LHS:
 Use `+=` as a relative append assign for things like increment. Note that `.a += .x` is equivalent to running `.a = .a + .x`.
 
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Concatenate arrays
 Given a sample.yml file of:
 ```yaml
@@ -90,6 +84,23 @@ yq '.a += "cat"' sample.yml
 will output
 ```yaml
 a: ['dog', 'cat']
+```
+
+## Prepend to existing array
+Given a sample.yml file of:
+```yaml
+a:
+  - dog
+```
+then
+```bash
+yq '.a = ["cat"] + .a' sample.yml
+```
+will output
+```yaml
+a:
+  - cat
+  - dog
 ```
 
 ## Add new object to array

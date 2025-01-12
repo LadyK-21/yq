@@ -41,7 +41,11 @@ yq*.snap
 
 test.yml
 test*.yml
+test*.xml
+test*.toml
 test*.yaml
+test_dir1/
+test_dir2/
 0.yml
 1.yml
 2.yml
@@ -57,3 +61,8 @@ debian/files
 
 # intellij
 /.idea
+
+# vscode
+.vscode
+
+yq3

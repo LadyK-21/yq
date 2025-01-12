@@ -7,12 +7,6 @@ To sort by descending order, pipe the results through the `reverse` operator aft
 Note that at this stage, `yq` only sorts scalar fields.
 
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Sort by string field
 Given a sample.yml file of:
 ```yaml
@@ -29,6 +23,28 @@ will output
 - a: apple
 - a: banana
 - a: cat
+```
+
+## Sort by multiple fields
+Given a sample.yml file of:
+```yaml
+- a: dog
+- a: cat
+  b: banana
+- a: cat
+  b: apple
+```
+then
+```bash
+yq 'sort_by(.a, .b)' sample.yml
+```
+will output
+```yaml
+- a: cat
+  b: apple
+- a: cat
+  b: banana
+- a: dog
 ```
 
 ## Sort descending by string field
@@ -139,6 +155,24 @@ will output
 - a: 1
 - a: 10
 - a: 100
+```
+
+## Sort by custom date field
+Given a sample.yml file of:
+```yaml
+- a: 12-Jun-2011
+- a: 23-Dec-2010
+- a: 10-Aug-2011
+```
+then
+```bash
+yq 'with_dtf("02-Jan-2006"; sort_by(.a))' sample.yml
+```
+will output
+```yaml
+- a: 23-Dec-2010
+- a: 12-Jun-2011
+- a: 10-Aug-2011
 ```
 
 ## Sort, nulls come first

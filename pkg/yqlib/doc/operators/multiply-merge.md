@@ -3,7 +3,9 @@
 Like the multiple operator in jq, depending on the operands, this multiply operator will do different things. Currently numbers, arrays and objects are supported.
 
 ## Objects and arrays - merging
-Objects are merged deeply matching on matching keys. By default, array values override and are not deeply merged.
+Objects are merged _deeply_ matching on matching keys. By default, array values override and are not deeply merged.
+
+You can use the add operator `+`, to shallow merge objects, see more info [here](https://mikefarah.gitbook.io/yq/operators/add).
 
 Note that when merging objects, this operator returns the merged object (not the parent). This will be clearer in the examples below.
 
@@ -14,7 +16,9 @@ You can control how objects are merged by using one or more of the following fla
 - `d` deeply merge arrays
 - `?` only merge _existing_ fields
 - `n` only merge _new_ fields
+- `c` clobber custom tags
 
+To perform a shallow merge only, use the add operator `+`, see more info [here](https://mikefarah.gitbook.io/yq/operators/add).
 
 ### Merge two files together
 This uses the load operator to merge file2 into file1.
@@ -35,12 +39,6 @@ By default - `yq` merge is naive. It merges maps when they match the key name, a
 For more complex array merging (e.g. merging items that match on a certain key) please see the example [here](https://mikefarah.gitbook.io/yq/operators/multiply-merge#merge-arrays-of-objects-together-matching-on-a-key)
 
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## Multiply integers
 Given a sample.yml file of:
 ```yaml
@@ -55,6 +53,62 @@ will output
 ```yaml
 a: 12
 b: 4
+```
+
+## Multiply string node X int
+Given a sample.yml file of:
+```yaml
+b: banana
+```
+then
+```bash
+yq '.b * 4' sample.yml
+```
+will output
+```yaml
+bananabananabananabanana
+```
+
+## Multiply int X string node
+Given a sample.yml file of:
+```yaml
+b: banana
+```
+then
+```bash
+yq '4 * .b' sample.yml
+```
+will output
+```yaml
+bananabananabananabanana
+```
+
+## Multiply string X int node
+Given a sample.yml file of:
+```yaml
+n: 4
+```
+then
+```bash
+yq '"banana" * .n' sample.yml
+```
+will output
+```yaml
+bananabananabananabanana
+```
+
+## Multiply int node X string
+Given a sample.yml file of:
+```yaml
+n: 4
+```
+then
+```bash
+yq '.n * "banana"' sample.yml
+```
+will output
+```yaml
+bananabananabananabanana
 ```
 
 ## Merge objects together, returning merged result only
@@ -255,7 +309,7 @@ thing:
 ```
 
 ## Merge, deeply merging arrays
-Merging arrays deeply means arrays are merge like objects, with indexes as their key. In this case, we merge the first item in the array, and do nothing with the second.
+Merging arrays deeply means arrays are merged like objects, with indices as their key. In this case, we merge the first item in the array and do nothing with the second.
 
 Given a sample.yml file of:
 ```yaml
@@ -479,5 +533,68 @@ a: !horse
   dog: woof
 b: !goat
   dog: woof
+```
+
+## Custom types: clobber tags
+Use the `c` option to clobber custom tags. Note that the second tag is now used.
+
+Given a sample.yml file of:
+```yaml
+a: !horse
+  cat: meow
+b: !goat
+  dog: woof
+```
+then
+```bash
+yq '.a *=c .b' sample.yml
+```
+will output
+```yaml
+a: !goat
+  cat: meow
+  dog: woof
+b: !goat
+  dog: woof
+```
+
+## Merging a null with a map
+Running
+```bash
+yq --null-input 'null * {"some": "thing"}'
+```
+will output
+```yaml
+some: thing
+```
+
+## Merging a map with null
+Running
+```bash
+yq --null-input '{"some": "thing"} * null'
+```
+will output
+```yaml
+some: thing
+```
+
+## Merging a null with an array
+Running
+```bash
+yq --null-input 'null * ["some"]'
+```
+will output
+```yaml
+- some
+```
+
+## Merging an array with null
+Running
+```bash
+yq --null-input '["some"] * null'
+```
+will output
+```yaml
+- some
 ```
 

@@ -8,9 +8,9 @@ var unionOperatorScenarios = []expressionScenario{
 	{
 		skipDoc:    true,
 		document:   "{}",
-		expression: `(.a, .b.c) as $x`,
+		expression: `(.a, .b.c) as $x | .`,
 		expected: []string{
-			"D0, P[], (doc)::{}\n",
+			"D0, P[], (!!map)::{}\n",
 		},
 	},
 	{

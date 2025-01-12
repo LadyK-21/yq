@@ -11,7 +11,17 @@ var uniqueOperatorScenarios = []expressionScenario{
 		document:       `[2,1,3,2]`,
 		expression:     `unique`,
 		expected: []string{
-			"D0, P[], (!!seq)::- 2\n- 1\n- 3\n",
+			"D0, P[], (!!seq)::[2, 1, 3]\n",
+		},
+	},
+	{
+		description: "Unique splat",
+		skipDoc:     true,
+		document:    `[2,1,2]`,
+		expression:  `unique[]`,
+		expected: []string{
+			"D0, P[0], (!!int)::2\n",
+			"D0, P[1], (!!int)::1\n",
 		},
 	},
 	{
@@ -20,7 +30,7 @@ var uniqueOperatorScenarios = []expressionScenario{
 		document:       `[~,null, ~, null]`,
 		expression:     `unique`,
 		expected: []string{
-			"D0, P[], (!!seq)::- ~\n- null\n",
+			"D0, P[], (!!seq)::[~, null]\n",
 		},
 	},
 	{
@@ -29,15 +39,31 @@ var uniqueOperatorScenarios = []expressionScenario{
 		document:       `[~,null, ~, null]`,
 		expression:     `unique_by(tag)`,
 		expected: []string{
-			"D0, P[], (!!seq)::- ~\n",
+			"D0, P[], (!!seq)::[~]\n",
 		},
 	},
 	{
-		description: "Unique array object fields",
+		description: "Unique array objects",
+		document:    `[{name: harry, pet: cat}, {name: billy, pet: dog}, {name: harry, pet: cat}]`,
+		expression:  `unique`,
+		expected: []string{
+			"D0, P[], (!!seq)::[{name: harry, pet: cat}, {name: billy, pet: dog}]\n",
+		},
+	},
+	{
+		description: "Unique array of objects by a field",
 		document:    `[{name: harry, pet: cat}, {name: billy, pet: dog}, {name: harry, pet: dog}]`,
 		expression:  `unique_by(.name)`,
 		expected: []string{
-			"D0, P[], (!!seq)::- {name: harry, pet: cat}\n- {name: billy, pet: dog}\n",
+			"D0, P[], (!!seq)::[{name: harry, pet: cat}, {name: billy, pet: dog}]\n",
+		},
+	},
+	{
+		description: "Unique array of arrays",
+		document:    `[[cat,dog], [cat, sheep], [cat,dog]]`,
+		expression:  `unique`,
+		expected: []string{
+			"D0, P[], (!!seq)::[[cat, dog], [cat, sheep]]\n",
 		},
 	},
 	{
@@ -45,7 +71,17 @@ var uniqueOperatorScenarios = []expressionScenario{
 		document:   `[{name: harry, pet: cat}, {pet: fish}, {name: harry, pet: dog}]`,
 		expression: `unique_by(.name)`,
 		expected: []string{
-			"D0, P[], (!!seq)::- {name: harry, pet: cat}\n- {pet: fish}\n",
+			"D0, P[], (!!seq)::[{name: harry, pet: cat}, {pet: fish}]\n",
+		},
+	},
+	{
+		description: "unique by splat",
+		skipDoc:     true,
+		document:    `[{name: harry, pet: cat}, {pet: fish}, {name: harry, pet: dog}]`,
+		expression:  `unique_by(.name)[]`,
+		expected: []string{
+			"D0, P[0], (!!map)::{name: harry, pet: cat}\n",
+			"D0, P[1], (!!map)::{pet: fish}\n",
 		},
 	},
 	{
@@ -53,7 +89,7 @@ var uniqueOperatorScenarios = []expressionScenario{
 		document:   `[{name: harry, pet: cat}, {pet: fish}, {name: harry, pet: dog}]`,
 		expression: `unique_by(.cat.dog)`,
 		expected: []string{
-			"D0, P[], (!!seq)::- {name: harry, pet: cat}\n",
+			"D0, P[], (!!seq)::[{name: harry, pet: cat}]\n",
 		},
 	},
 	{
@@ -61,7 +97,7 @@ var uniqueOperatorScenarios = []expressionScenario{
 		document:   "# abc\n[{name: harry, pet: cat}, {pet: fish}, {name: harry, pet: dog}]\n# xyz",
 		expression: `unique_by(.name)`,
 		expected: []string{
-			"D0, P[], (!!seq)::# abc\n- {name: harry, pet: cat}\n- {pet: fish}\n# xyz\n",
+			"D0, P[], (!!seq)::# abc\n[{name: harry, pet: cat}, {pet: fish}]\n# xyz\n",
 		},
 	},
 }

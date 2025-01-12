@@ -8,15 +8,21 @@ var variableOperatorScenarios = []expressionScenario{
 	{
 		skipDoc:    true,
 		document:   `{}`,
-		expression: `.a.b as $foo`,
+		expression: `.a.b as $foo | .`,
 		expected: []string{
-			"D0, P[], (doc)::{}\n",
+			"D0, P[], (!!map)::{}\n",
 		},
+	},
+	{
+		skipDoc:       true,
+		document:      `{}`,
+		expression:    `.a.b as $foo`,
+		expectedError: "must use variable with a pipe, e.g. `exp as $x | ...`",
 	},
 	{
 		document:      "a: [cat]",
 		skipDoc:       true,
-		expression:    "(.[] | {.name: .}) as $item",
+		expression:    "(.[] | {.name: .}) as $item | .",
 		expectedError: `cannot index array with 'name' (strconv.ParseInt: parsing "name": invalid syntax)`,
 	},
 	{
@@ -37,6 +43,22 @@ var variableOperatorScenarios = []expressionScenario{
 		},
 	},
 	{
+		skipDoc:    true,
+		document:   `[1, 2]`,
+		expression: `.[] | . as $f | select($f == 2)`,
+		expected: []string{
+			"D0, P[1], (!!int)::2\n",
+		},
+	},
+	{
+		skipDoc:    true,
+		document:   `[1, 2]`,
+		expression: `[.[] | . as $f | $f + 1]`,
+		expected: []string{
+			"D0, P[], (!!seq)::- 2\n- 3\n",
+		},
+	},
+	{
 		description:    "Using variables as a lookup",
 		subdescription: "Example taken from [jq](https://stedolan.github.io/jq/manual/#Variable/SymbolicBindingOperator:...as$identifier|...)",
 		document: `{"posts": [{"title": "First post", "author": "anon"},
@@ -54,7 +76,7 @@ var variableOperatorScenarios = []expressionScenario{
 		document:    "a: a_value\nb: b_value",
 		expression:  `.a as $x  | .b as $y | .b = $x | .a = $y`,
 		expected: []string{
-			"D0, P[], (doc)::a: b_value\nb: a_value\n",
+			"D0, P[], (!!map)::a: b_value\nb: a_value\n",
 		},
 	},
 	{
@@ -63,7 +85,7 @@ var variableOperatorScenarios = []expressionScenario{
 		document:       `a: {b: thing, c: something}`,
 		expression:     `.a.b ref $x | $x = "new" | $x style="double"`,
 		expected: []string{
-			"D0, P[], (doc)::a: {b: \"new\", c: something}\n",
+			"D0, P[], (!!map)::a: {b: \"new\", c: something}\n",
 		},
 	},
 }

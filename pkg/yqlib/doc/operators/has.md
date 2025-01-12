@@ -1,12 +1,6 @@
 # Has
 
-This is operation that returns true if the key exists in a map (or index in an array), false otherwise.
-
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
+This operation returns true if the key exists in a map (or index in an array), false otherwise.
 
 ## Has map key
 Given a sample.yml file of:

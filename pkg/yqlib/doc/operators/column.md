@@ -2,11 +2,7 @@
 
 Returns the column of the matching node. Starts from 1, 0 indicates there was no column data.
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
+Column is the number of characters that precede that node on the line it starts.
 
 ## Returns column of _value_ node
 Given a sample.yml file of:

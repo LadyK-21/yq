@@ -4,7 +4,7 @@ The `or` and `and` operators take two parameters and return a boolean result.
 
 `not` flips a boolean from true to false, or vice versa. 
 
-`any` will return `true` if there are any `true` values in a array sequence, and `all` will return true if _all_ elements in an array are true.
+`any` will return `true` if there are any `true` values in an array sequence, and `all` will return true if _all_ elements in an array are true.
 
 `any_c(condition)` and `all_c(condition)` are like `any` and `all` but they take a condition expression that is used against each element to determine if it's `true`. Note: in `jq` you can simply pass a condition to `any` or `all` and it simply works - `yq` isn't that clever..yet
 
@@ -16,12 +16,6 @@ These are most commonly used with the `select` operator to filter particular nod
 - comparison (`>=`, `<` etc) operators [here](https://mikefarah.gitbook.io/yq/operators/compare)
 - select operator [here](https://mikefarah.gitbook.io/yq/operators/select)
 
-{% hint style="warning" %}
-Note that versions prior to 4.18 require the 'eval/e' command to be specified.&#x20;
-
-`yq e <exp> <file>`
-{% endhint %}
-
 ## `or` example
 Running
 ```bash
@@ -30,6 +24,24 @@ yq --null-input 'true or false'
 will output
 ```yaml
 true
+```
+
+## "yes" and "no" are strings
+In the yaml 1.2 standard, support for yes/no as booleans was dropped - they are now considered strings. See '10.2.1.2. Boolean' in https://yaml.org/spec/1.2.2/
+
+Given a sample.yml file of:
+```yaml
+- yes
+- no
+```
+then
+```bash
+yq '.[] | tag' sample.yml
+```
+will output
+```yaml
+!!str
+!!str
 ```
 
 ## `and` example
